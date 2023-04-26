@@ -1,0 +1,52 @@
+{
+    "mappings": [
+        {
+            "request": {
+                "method": "GET",
+                "urlPattern": "(.+)(\/ping-fail)$"
+            },
+            "response": {
+                "status": 500
+            }
+        },
+        {
+            "request": {
+                "method": "GET",
+                "urlPattern": "(.+)(\/ping-ok)$"
+            },
+            "response": {
+                "status": 200
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "urlPattern": "(\/provider-one\/search)"
+            },
+            "response": {
+                "body": "{\"Routes\":[{\"From\":\"{{jsonPath request.body '$.from'}}\",\"To\":\"{{jsonPath request.body '$.to'}}\",\"DateFrom\":\"{{jsonPath request.body '$.dateFrom'}}\", \"DateTo\":\"{{now offset='1 days'}}\", \"Price\":{{randomInt lower=1 upper=100000000}},\"TimeLimit\":\"{{now offset='15 minutes'}}\" }]}",
+                "status": 200
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "urlPattern": "(\/provider-two\/search)"
+            },
+            "response": {
+                "body": "{\"Routes\":[{\"Departure\":{\"Point\":\"{{jsonPath request.body '$.departure'}}\",\"Date\":\"{{jsonPath request.body '$.departureDate'}}\"},\"Arrival\":{\"Point\":\"{{jsonPath request.body '$.arrival'}}\",\"Date\":\"{{now offset='1 days'}}\"},\"Price\":{{randomInt lower=1 upper=100000000}},\"TimeLimit\":\"{{now offset='15 minutes'}}\"}]}",
+                "status": 200
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "urlPattern": "(.+)(\/search-nomatch)"
+            },
+            "response": {
+                "body": "{\"Routes\":[]}",
+                "status": 200
+            }
+        }
+    ]
+}
