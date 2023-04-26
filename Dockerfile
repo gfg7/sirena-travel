@@ -7,10 +7,10 @@ ENV ASPNETCORE_URLS=http://+:80
 
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
-COPY ["SirenaTravel/SirenaTravel.csproj", "SirenaTravel/"]
-RUN dotnet restore "SirenaTravel/SirenaTravel.csproj"
+COPY ["SirenaTravel.csproj", "./"]
+RUN dotnet restore "SirenaTravel.csproj"
 COPY . .
-WORKDIR "/src/SirenaTravel"
+WORKDIR "/src/."
 RUN dotnet build "SirenaTravel.csproj" -c Release -o /app/build
 
 FROM build AS publish

@@ -1,0 +1,5 @@
+ProviderOnePing=provider-one/ping-ok
+ProviderOneService=provider-one/search
+ProviderTwoPing=provider-two/ping-ok
+ProviderTwoService=provider-two/search
+ASPNETCORE_ENVIRONMENT=Development
