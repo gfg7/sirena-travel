@@ -37,3 +37,24 @@ API должно уметь производить поиск только в р
 ### Для тестирования решения с использованием заглушки провайдеров:
 
 ``docker compose -f docker-compose.yml -f docker-compose.stub.yml up -d ``
+
+Для проверки кейсов, помимо happy path - изменять нужные эдпоинты в .test
+
+
+Переменные среды:
+
+- REDIS_CONNECTION=строка подключения Redis
+- ProviderOne=хост провайдера 1
+- ProviderOnePing=пинг провайдера 1
+- ProviderOneService=сервис провайдера 1
+- ProviderTwo=хост провайдера 2
+- ProviderTwoPing=пинг провайдера 2
+- ProviderTwoService=пинг провайдера 2
+
+
+Эндпоинты эмулятора:
+
+- *ping-fail - 500
+- *ping-ok - 200
+- *search-nomatch - пустой массив Route
+- provider-*-/search - динамический соответсвующий ответ провайдера
