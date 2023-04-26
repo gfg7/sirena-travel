@@ -1,4 +1,8 @@
+using Microsoft.AspNetCore.Mvc;
 using TestTask;
+using TestTask.Contract.Cache;
+using TestTask.Middleware;
+using TestTask.Services.Cache;
 using TestTask.Services.Providers.Register;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,7 +16,9 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddLogging();
 
+
 builder.Services.AddProviders();
+builder.Services.AddScoped(typeof(ICacheProvider<>), typeof(RedisCacheRepository<>));
 builder.Services.AddScoped<ISearchService, SearchService>();
 
 var app = builder.Build();
@@ -26,14 +32,22 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseMiddleware<LoggingHandler>();
+
 app.MapGet("/ping", async (ISearchService pingProvider) =>
 {
-    return await pingProvider.IsAvailableAsync(new CancellationToken());
+    if (await pingProvider.IsAvailableAsync(new CancellationToken()))
+    {
+        return Results.Ok();
+    }
+
+    return Results.StatusCode(500);
 });
 
-app.MapPost("/search", async (SearchRequest request, ISearchService service) =>
+app.MapPost("/search", async ([FromBody] SearchRequest request, ISearchService service) =>
 {
-    return await service.SearchAsync(request, new CancellationToken());
-});
+    var result = await service.SearchAsync(request, new CancellationToken());
+    return Results.Json<SearchResponse>(result);
+}).Accepts<SearchRequest>("application/json").Produces<SearchResponse>();
 
 app.Run();
