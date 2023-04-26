@@ -1,20 +1,24 @@
-using Microsoft.Extensions.Caching.Memory;
+using System.Collections.Concurrent;
+using TestTask.Contract.Cache;
 using TestTask.Contract.Providers;
+using TestTask.Services.Mappers;
 using TestTask.Services.Providers.Register;
 
 namespace TestTask;
 
 public class SearchService : ISearchService
 {
-    private readonly IMemoryCache _memoryCache;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<SearchService> _logger;
-    private IRouteProvider _provider;
+    private readonly ICacheProvider<Route> _cache;
+    private List<IRouteProvider> _activeProviders = new List<IRouteProvider>();
 
-    public SearchService(IMemoryCache memoryCache, IServiceProvider serviceProvider, ILogger<SearchService> logger)
+    public SearchService(IServiceProvider serviceProvider,
+                         ILogger<SearchService> logger,
+                         ICacheProvider<Route> cache)
     {
         _serviceProvider = serviceProvider;
-        _memoryCache = memoryCache;
+        _cache = cache;
         _logger = logger;
     }
 
@@ -31,8 +35,7 @@ public class SearchService : ISearchService
                 try
                 {
                     await provider!.Ping();
-                    _provider = provider;
-                    return true;
+                    _activeProviders.Add(provider);
                 }
                 catch (System.Exception ex)
                 {
@@ -40,27 +43,56 @@ public class SearchService : ISearchService
                 }
             }
 
-            _logger.LogError($"No provider available");
-            return false;
+            return _activeProviders.Count() > 0;
         }
     }
 
     public async Task<SearchResponse> SearchAsync(SearchRequest request, CancellationToken cancellationToken)
     {
-        if (request.Filters?.OnlyCached.HasValue is true)
+        if (request.Filters?.OnlyCached is true)
         {
-            // add cache filter logic
-            return null;
+            var cachedRoute = _cache.GetAll(request.ToClause());
+
+            return new SearchResponse().FromRoute(cachedRoute);
         }
 
         var state = await IsAvailableAsync(new CancellationToken());
 
         if (state)
         {
-            var result = await _provider!.GetRoute(request);
-            return result;
+            var routes = new ConcurrentBag<Route>();
+            var tasks = new List<Task>();
+
+            foreach (var provider in _activeProviders)
+            {
+                var task = Task.Run(async () =>
+            {
+                var result = await provider.GetRoute(request);
+                foreach (var route in result.Routes)
+                {
+                    routes.Add(route);
+                }
+            });
+
+                tasks.Add(task);
+            }
+
+            await Task.WhenAll(tasks);
+
+            await CacheRoutes(routes);
+
+            return new SearchResponse().FromRoute(routes);
         }
 
         throw new Exception("No provider available");
+    }
+
+    private async Task CacheRoutes(IEnumerable<Route> routes)
+    {
+        var now = DateTime.UtcNow;
+        foreach (var route in routes)
+        {
+            await _cache.Insert(route, route.TimeLimit - now);
+        }
     }
 }

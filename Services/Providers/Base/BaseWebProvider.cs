@@ -4,9 +4,11 @@ namespace TestTask.Services.Providers.Base;
 
 public abstract class BaseWebProvider : IPing
 {
+    protected readonly ILogger<BaseWebProvider> _logger;
     protected readonly HttpClient _client;
-    public BaseWebProvider()
+    public BaseWebProvider(ILogger<BaseWebProvider> logger)
     {
+        _logger = logger;
         _client = SetupClient();
     }
 

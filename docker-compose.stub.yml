@@ -1,0 +1,28 @@
+# Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP.NET Core service.
+
+version: '3.4'
+
+services:
+  sirenatravel:
+    environment:
+      - ProviderOne=http://provider-stub:5798
+      - ProviderOnePing=provider-one/ping-ok
+      - ProviderOneService=provider-one/search
+      - ProviderTwo=http://provider-stub:5798
+      - ProviderTwoPing=provider-two/ping-ok
+      - ProviderTwoService=provider-two/search
+  stub:
+    container_name: provider-stub
+    image: wiremock/wiremock:latest-alpine
+    ports:
+      - 5798:8080
+    volumes:
+      - type: bind
+        source: ./wiremock
+        target: /home/wiremock/mappings
+    command: --verbose --global-response-templating
+    networks:
+      - sirenatravel
+  redis:
+    ports:
+      - 6379:6379

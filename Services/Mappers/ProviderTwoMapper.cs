@@ -17,6 +17,7 @@ public static class ProviderTwoMapper
     {
         return new Route()
         {
+            Id = Guid.NewGuid(),
             Origin = source.Departure.Point,
             Destination = source.Arrival.Point,
             OriginDateTime = source.Departure.Date,

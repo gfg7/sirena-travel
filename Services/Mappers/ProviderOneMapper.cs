@@ -20,6 +20,7 @@ public static class ProviderOneMapper
     {
         return new Route
         {
+            Id = Guid.NewGuid(),
             Destination = source.To,
             Origin = source.From,
             TimeLimit = source.TimeLimit,
